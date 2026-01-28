@@ -1,0 +1,4 @@
+// Пример файла конфигурации
+// Скопируйте этот файл в config.js и укажите URL вашего backend API
+
+const API_BASE_URL = 'https://your-backend.railway.app'; // Замените на URL вашего backend

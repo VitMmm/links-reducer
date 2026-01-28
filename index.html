@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reducer link</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background-color: #ffffff;
+        color: #1a1a1a;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 40px;
+      }
+
+      .header-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .header-icon::before {
+        content: '🌐';
+        font-size: 20px;
+      }
+
+      .header-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1a1a1a;
+      }
+
+      .form-section {
+        margin-bottom: 32px;
+      }
+
+      .label-container {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1a1a1a;
+      }
+
+      .info-icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 1.5px solid #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        color: #6b7280;
+        cursor: help;
+        flex-shrink: 0;
+      }
+
+      .input-field {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #1a1a1a;
+        background-color: #ffffff;
+        transition: border-color 0.2s;
+      }
+
+      .input-field:focus {
+        outline: none;
+        border-color: #3b82f6;
+      }
+
+      .input-field::placeholder {
+        color: #9ca3af;
+      }
+
+      .two-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+
+      .select-wrapper {
+        position: relative;
+      }
+
+      .select-field {
+        width: 100%;
+        padding: 12px 16px;
+        padding-right: 40px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #1a1a1a;
+        background-color: #ffffff;
+        appearance: none;
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+
+      .select-field:focus {
+        outline: none;
+        border-color: #3b82f6;
+      }
+
+      .select-arrow {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 6px solid #6b7280;
+        pointer-events: none;
+      }
+
+      .input-with-button {
+        display: flex;
+        gap: 0;
+      }
+
+      .input-with-button .input-field {
+        border-radius: 8px 0 0 8px;
+        border-right: none;
+        flex: 1;
+      }
+
+      .optimize-button {
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-left: none;
+        border-radius: 0 8px 8px 0;
+        background-color: #ffffff;
+        color: #1a1a1a;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+      }
+
+      .optimize-button:hover {
+        background-color: #f9fafb;
+      }
+
+      .optimize-button::after {
+        content: '▼';
+        font-size: 10px;
+        color: #6b7280;
+      }
+
+      .hint {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-size: 12px;
+        color: #6b7280;
+      }
+
+      .hint-arrow {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+      }
+
+      .hint-left {
+        transform: rotate(-45deg);
+      }
+
+      .hint-right {
+        transform: rotate(45deg);
+      }
+
+      .submit-button {
+        width: 100%;
+        padding: 14px 24px;
+        background-color: #3b82f6;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-top: 8px;
+      }
+
+      .submit-button:hover {
+        background-color: #2563eb;
+      }
+
+      .submit-button:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+      }
+
+      .result-section {
+        margin-top: 32px;
+        padding: 24px;
+        background-color: #f9fafb;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        display: none;
+      }
+
+      .result-section.show {
+        display: block;
+      }
+
+      .result-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #6b7280;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .result-link-container {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .result-link {
+        flex: 1;
+        padding: 12px 16px;
+        background-color: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 16px;
+        color: #1a1a1a;
+        font-family: 'Courier New', monospace;
+        word-break: break-all;
+      }
+
+      .copy-button {
+        padding: 12px 20px;
+        background-color: #10b981;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        white-space: nowrap;
+      }
+
+      .copy-button:hover {
+        background-color: #059669;
+      }
+
+      .copy-button.copied {
+        background-color: #6b7280;
+      }
+
+      .error-message {
+        margin-top: 8px;
+        padding: 12px;
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        color: #dc2626;
+        font-size: 14px;
+        display: none;
+      }
+
+      .error-message.show {
+        display: block;
+      }
+
+      @media (max-width: 768px) {
+        .two-columns {
+          grid-template-columns: 1fr;
+        }
+
+        .result-link-container {
+          flex-direction: column;
+        }
+
+        .copy-button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="header-icon"></div>
+        <h1 class="header-title">Создайте новую фирменную ссылку и QR-код.</h1>
+      </div>
+
+      <div class="form-section">
+        <div class="label-container">
+          <label class="label" for="destination-url">Введите длинную ссылку</label>
+          <div class="info-icon" title="Вставьте ссылку, которую нужно сократить">i</div>
+        </div>
+        <input type="url" id="destination-url" class="input-field" placeholder="https://example.com/very/long/url/with/many/parameters" />
+        <div class="error-message" id="error-message"></div>
+      </div>
+
+      <div class="form-section">
+        <div class="label-container">
+          <label class="label" for="custom-slug">Суффикс для короткой ссылки</label>
+          <div class="info-icon" title="Укажите желаемый суффикс для короткой ссылки (необязательно)">i</div>
+        </div>
+        <input type="text" id="custom-slug" class="input-field" placeholder="my-custom-link (оставьте пустым для автоматической генерации)" />
+        <button type="button" id="submit-button" class="submit-button">Создать короткую ссылку</button>
+      </div>
+
+      <div class="result-section" id="result-section">
+        <div class="result-label">Ваша короткая ссылка:</div>
+        <div class="result-link-container">
+          <div class="result-link" id="result-link"></div>
+          <button type="button" class="copy-button" id="copy-button">Копировать</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // API базовый URL
+      // Если используется отдельный backend, раскомментируйте и укажите URL:
+      // const API_BASE_URL = 'https://your-backend.railway.app';
+      // Иначе используем текущий домен (для работы с локальным сервером)
+      const API_BASE_URL = window.location.origin;
+
+      // Создать короткую ссылку через API
+      async function createLink(longUrl, slug) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/links`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              longUrl: longUrl,
+              slug: slug || null
+            })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Ошибка при создании ссылки');
+          }
+
+          return data;
+        } catch (error) {
+          throw error;
+        }
+      }
+
+      // Получить длинную ссылку по slug через API
+      async function getLinkBySlug(slug) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/links/${slug}`);
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Ссылка не найдена');
+          }
+
+          return data.longUrl;
+        } catch (error) {
+          throw error;
+        }
+      }
+
+
+      // Валидация URL (поддерживает шаблоны типа {{ad.id}})
+      function isValidUrl(string) {
+        // Проверяем базовую структуру URL
+        const urlPattern = /^https?:\/\/.+/i;
+        if (!urlPattern.test(string)) {
+          return false;
+        }
+
+        // Пытаемся создать URL, заменяя шаблоны на временные значения для проверки структуры
+        try {
+          const testUrl = string.replace(/\{\{[^}]+\}\}/g, 'test');
+          const url = new URL(testUrl);
+          return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch (_) {
+          // Если не получилось, проверяем хотя бы базовую структуру
+          return urlPattern.test(string);
+        }
+      }
+
+      // Показать ошибку
+      function showError(message) {
+        const errorEl = document.getElementById('error-message');
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
+      }
+
+      // Скрыть ошибку
+      function hideError() {
+        const errorEl = document.getElementById('error-message');
+        errorEl.classList.remove('show');
+      }
+
+      // Показать результат
+      function showResult(shortUrl) {
+        const resultSection = document.getElementById('result-section');
+        const resultLink = document.getElementById('result-link');
+        resultLink.textContent = shortUrl;
+        resultSection.classList.add('show');
+        resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Копирование в буфер обмена
+      async function copyToClipboard(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          const copyButton = document.getElementById('copy-button');
+          const originalText = copyButton.textContent;
+          copyButton.textContent = 'Скопировано!';
+          copyButton.classList.add('copied');
+
+          setTimeout(() => {
+            copyButton.textContent = originalText;
+            copyButton.classList.remove('copied');
+          }, 2000);
+        } catch (err) {
+          // Fallback для старых браузеров
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+
+          const copyButton = document.getElementById('copy-button');
+          copyButton.textContent = 'Скопировано!';
+          setTimeout(() => {
+            copyButton.textContent = 'Копировать';
+          }, 2000);
+        }
+      }
+
+      // Нормализация slug (убирает недопустимые символы)
+      function normalizeSlug(slug) {
+        if (!slug) return '';
+        // Убираем недопустимые символы, оставляем только буквы, цифры и дефисы
+        return slug
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, '')
+          .replace(/-+/g, '-');
+      }
+
+      // Формирование короткой ссылки с доменом текущей страницы (без пути)
+      function formatShortUrl(slug) {
+        // Используем только домен (origin) без пути
+        // Например: https://claimordernow.store вместо https://claimordernow.store/landings/sweeps/_TEST/re_links
+        return window.location.origin + '/#' + slug;
+      }
+
+      // Обработчик создания короткой ссылки
+      document.getElementById('submit-button').addEventListener('click', async function () {
+        const input = document.getElementById('destination-url');
+        const slugInput = document.getElementById('custom-slug');
+        const submitButton = document.getElementById('submit-button');
+        const longUrl = input.value.trim();
+        const customSlug = slugInput.value.trim();
+
+        hideError();
+
+        if (!longUrl) {
+          showError('Пожалуйста, введите ссылку');
+          return;
+        }
+
+        // Добавляем протокол, если его нет
+        let processedUrl = longUrl;
+        if (!longUrl.startsWith('http://') && !longUrl.startsWith('https://')) {
+          processedUrl = 'https://' + longUrl;
+        }
+
+        if (!isValidUrl(processedUrl)) {
+          showError('Пожалуйста, введите корректную ссылку (начинается с http:// или https://)');
+          return;
+        }
+
+        // Нормализуем slug, если указан
+        let normalizedSlug = null;
+        if (customSlug) {
+          normalizedSlug = normalizeSlug(customSlug);
+          if (!normalizedSlug) {
+            showError('Суффикс содержит недопустимые символы. Используйте только буквы, цифры и дефисы');
+            return;
+          }
+        }
+
+        // Блокируем кнопку на время запроса
+        submitButton.disabled = true;
+        submitButton.textContent = 'Создание...';
+
+        try {
+          // Отправляем запрос на сервер
+          const result = await createLink(processedUrl, normalizedSlug);
+          
+          // Формируем короткую ссылку
+          const shortUrl = formatShortUrl(result.slug);
+
+          // Показываем результат
+          showResult(shortUrl);
+        } catch (error) {
+          showError(error.message || 'Ошибка при создании ссылки');
+        } finally {
+          // Разблокируем кнопку
+          submitButton.disabled = false;
+          submitButton.textContent = 'Создать короткую ссылку';
+        }
+      });
+
+      // Обработчик копирования
+      document.getElementById('copy-button').addEventListener('click', function () {
+        const resultLink = document.getElementById('result-link');
+        copyToClipboard(resultLink.textContent);
+      });
+
+      // Обработка Enter в полях ввода
+      document.getElementById('destination-url').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          document.getElementById('submit-button').click();
+        }
+      });
+
+      document.getElementById('custom-slug').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          document.getElementById('submit-button').click();
+        }
+      });
+
+      // Обработка хеша в URL для редиректа (выполняется сразу, до загрузки DOM)
+      (async function () {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+          try {
+            // Получаем длинную ссылку с сервера
+            const longUrl = await getLinkBySlug(hash);
+            if (longUrl) {
+              // Немедленный редирект на сохраненную ссылку
+              window.location.replace(longUrl);
+              return;
+            }
+          } catch (error) {
+            // Если ссылка не найдена, просто остаемся на странице
+            console.error('Ссылка не найдена:', error);
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
