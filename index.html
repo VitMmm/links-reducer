@@ -4,6 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Reducer link</title>
+    <script>
+      // Немедленное скрытие страницы при наличии хеша (выполняется до рендера)
+      (function() {
+        if (window.location.hash && window.location.hash.length > 1) {
+          // Скрываем body сразу, чтобы пользователь не видел страницу
+          document.documentElement.style.display = 'none';
+          // Пытаемся выполнить редирект как можно быстрее
+          const hash = window.location.hash.substring(1);
+          fetch(window.location.origin + '/api/links/' + hash)
+            .then(response => response.json())
+            .then(data => {
+              if (data.longUrl) {
+                window.location.replace(data.longUrl);
+              } else {
+                // Если ссылка не найдена, показываем страницу
+                document.documentElement.style.display = '';
+              }
+            })
+            .catch(() => {
+              // При ошибке показываем страницу
+              document.documentElement.style.display = '';
+            });
+        }
+      })();
+    </script>
     <style>
       * {
         margin: 0;
@@ -577,7 +602,7 @@
         }
       });
 
-      // Обработка хеша в URL для редиректа (выполняется сразу, до загрузки DOM)
+      // Обработка хеша в URL для редиректа (fallback, если скрипт в head не сработал)
       (async function () {
         const hash = window.location.hash.substring(1);
         if (hash) {
@@ -590,7 +615,8 @@
               return;
             }
           } catch (error) {
-            // Если ссылка не найдена, просто остаемся на странице
+            // Если ссылка не найдена, показываем страницу (она могла быть скрыта скриптом в head)
+            document.documentElement.style.display = '';
             console.error('Ссылка не найдена:', error);
           }
         }
