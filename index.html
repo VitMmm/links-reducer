@@ -6,15 +6,15 @@
     <title>Reducer link</title>
     <script>
       // Немедленное скрытие страницы при наличии хеша (выполняется до рендера)
-      (function() {
+      (function () {
         if (window.location.hash && window.location.hash.length > 1) {
           // Скрываем body сразу, чтобы пользователь не видел страницу
           document.documentElement.style.display = 'none';
           // Пытаемся выполнить редирект как можно быстрее
           const hash = window.location.hash.substring(1);
           fetch(window.location.origin + '/api/links/' + hash)
-            .then(response => response.json())
-            .then(data => {
+            .then((response) => response.json())
+            .then((data) => {
               if (data.longUrl) {
                 window.location.replace(data.longUrl);
               } else {
@@ -374,6 +374,21 @@
         <input type="text" id="custom-slug" class="input-field" placeholder="my-custom-link (оставьте пустым для автоматической генерации)" />
         <button type="button" id="submit-button" class="submit-button">Создать короткую ссылку</button>
       </div>
+      
+      <!-- Новая секция: загрузка изображения для Open Graph -->
+      <div class="form-section" id="image-upload-section" style="margin-top: 8px;">
+        <div class="label-container">
+          <label class="label" for="og-image">Изображение для превью (Open Graph)</label>
+          <div class="info-icon" title="Загрузите картинку, которая будет использоваться в превью при шаринге">i</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <input type="file" id="og-image" accept="image/*" />
+          <button type="button" id="remove-image-button" style="display:none;padding:8px 12px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;">Удалить</button>
+        </div>
+        <div id="og-image-preview" style="margin-top:12px;display:none;">
+          <img id="og-preview-img" src="" alt="preview" style="max-width:200px;max-height:120px;border-radius:8px;border:1px solid #e5e7eb;" />
+        </div>
+      </div>
 
       <div class="result-section" id="result-section">
         <div class="result-label">Ваша короткая ссылка:</div>
@@ -391,8 +406,8 @@
       // Иначе используем текущий домен (для работы с локальным сервером)
       const API_BASE_URL = window.location.origin;
 
-      // Создать короткую ссылку через API
-      async function createLink(longUrl, slug) {
+      // Создать короткую ссылку через API (добавлено imageUrl для OG)
+      async function createLink(longUrl, slug, imageUrl) {
         try {
           const response = await fetch(`${API_BASE_URL}/api/links`, {
             method: 'POST',
@@ -401,8 +416,9 @@
             },
             body: JSON.stringify({
               longUrl: longUrl,
-              slug: slug || null
-            })
+              slug: slug || null,
+              imageUrl: imageUrl || null,
+            }),
           });
 
           const data = await response.json();
@@ -414,6 +430,29 @@
           return data;
         } catch (error) {
           throw error;
+        }
+      }
+
+      // Загрузка изображения на сервер — ожидается endpoint POST /api/uploads, возвращающий { url }
+      async function uploadImage(file) {
+        if (!file) return null;
+        try {
+          const form = new FormData();
+          form.append('file', file);
+
+          const resp = await fetch(`${API_BASE_URL}/api/uploads`, {
+            method: 'POST',
+            body: form,
+          });
+
+          const payload = await resp.json();
+          if (!resp.ok) {
+            throw new Error(payload.error || 'Ошибка при загрузке изображения');
+          }
+
+          return payload.url || null;
+        } catch (err) {
+          throw err;
         }
       }
 
@@ -432,7 +471,6 @@
           throw error;
         }
       }
-
 
       // Валидация URL (поддерживает шаблоны типа {{ad.id}})
       function isValidUrl(string) {
@@ -522,14 +560,15 @@
       function formatShortUrl(slug) {
         // Используем только домен (origin) без пути
         // Например: https://claimordernow.store вместо https://claimordernow.store/landings/sweeps/_TEST/re_links
-        return window.location.origin + '/#' + slug;
+        return window.location.origin + '/' + slug;
       }
 
-      // Обработчик создания короткой ссылки
+      // Обработчик создания короткой ссылки (с поддержкой загрузки изображения для OG)
       document.getElementById('submit-button').addEventListener('click', async function () {
         const input = document.getElementById('destination-url');
         const slugInput = document.getElementById('custom-slug');
         const submitButton = document.getElementById('submit-button');
+        const fileInput = document.getElementById('og-image');
         const longUrl = input.value.trim();
         const customSlug = slugInput.value.trim();
 
@@ -566,14 +605,36 @@
         submitButton.textContent = 'Создание...';
 
         try {
-          // Отправляем запрос на сервер
-          const result = await createLink(processedUrl, normalizedSlug);
-          
+          // Если выбран файл — сначала загружаем его и получаем imageUrl
+          let imageUrl = null;
+          try {
+            const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+            if (file) {
+              imageUrl = await uploadImage(file);
+            }
+          } catch (uploadErr) {
+            // Ошибка загрузки изображения не прерывает создание ссылки, но показываем предупреждение
+            console.error('Ошибка при загрузке изображения:', uploadErr);
+            showError('Не удалось загрузить изображение. Ссылка будет создана без превью.');
+          }
+
+          // Создаём ссылку, передавая imageUrl если он есть
+          const result = await createLink(processedUrl, normalizedSlug, imageUrl);
+
           // Формируем короткую ссылку
           const shortUrl = formatShortUrl(result.slug);
 
           // Показываем результат
           showResult(shortUrl);
+
+          // Показать превью в результате, если backend вернул imageUrl или у нас есть imageUrl
+          const previewUrl = result.imageUrl || imageUrl || null;
+          if (previewUrl) {
+            const previewWrap = document.getElementById('og-image-preview');
+            const previewImg = document.getElementById('og-preview-img');
+            previewImg.src = previewUrl;
+            previewWrap.style.display = 'block';
+          }
         } catch (error) {
           showError(error.message || 'Ошибка при создании ссылки');
         } finally {
@@ -601,6 +662,39 @@
           document.getElementById('submit-button').click();
         }
       });
+
+      // Обработка выбора изображения: показать превью и кнопку удаления
+      const ogInput = document.getElementById('og-image');
+      const removeBtn = document.getElementById('remove-image-button');
+      const previewWrap = document.getElementById('og-image-preview');
+      const previewImg = document.getElementById('og-preview-img');
+
+      if (ogInput) {
+        ogInput.addEventListener('change', function () {
+          const file = ogInput.files && ogInput.files[0] ? ogInput.files[0] : null;
+          if (file) {
+            const url = URL.createObjectURL(file);
+            previewImg.src = url;
+            previewWrap.style.display = 'block';
+            removeBtn.style.display = 'inline-block';
+          } else {
+            previewImg.src = '';
+            previewWrap.style.display = 'none';
+            removeBtn.style.display = 'none';
+          }
+        });
+      }
+
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+          if (ogInput) {
+            ogInput.value = '';
+          }
+          previewImg.src = '';
+          previewWrap.style.display = 'none';
+          removeBtn.style.display = 'none';
+        });
+      }
 
       // Обработка хеша в URL для редиректа (fallback, если скрипт в head не сработал)
       (async function () {

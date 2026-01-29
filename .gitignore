@@ -1,3 +1,10 @@
+node_modules
+.env
+data.db
+uploads
+npm-debug.log
+dist
+
 node_modules/
 links.db
 .DS_Store
